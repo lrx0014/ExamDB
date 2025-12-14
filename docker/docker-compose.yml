@@ -67,11 +67,11 @@ services:
       lab:
         ipv4_address: 172.28.0.12
 
-  fe_main:
+  fe-main:
     build:
       context: ../frontend/exam-sys
-    image: examdb/main-site:local
-    container_name: main_site
+    image: examdb/fe-main:local
+    container_name: fe_main
     restart: unless-stopped
     environment:
       - VITE_API_BASE=http://api_server:8080
