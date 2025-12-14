@@ -29,7 +29,7 @@ $$;
 CREATE SCHEMA IF NOT EXISTS auth;
 
 CREATE TABLE auth.users (
-    id            BIGSERIAL PRIMARY KEY,
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email         CITEXT UNIQUE NOT NULL,
     password_hash TEXT          NOT NULL,
     full_name     TEXT          NOT NULL,
@@ -50,13 +50,13 @@ EXECUTE PROCEDURE set_mtime();
 --------------------------------------------------------------
 
 CREATE TABLE auth.roles (
-    id     SMALLSERIAL PRIMARY KEY,
+    id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code   TEXT UNIQUE NOT NULL
 );
 
 CREATE TABLE auth.user_roles (
-    user_id BIGINT NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    role_id SMALLINT NOT NULL REFERENCES auth.roles(id) ON DELETE RESTRICT,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    role_id UUID NOT NULL REFERENCES auth.roles(id) ON DELETE RESTRICT,
     ctime   TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (user_id, role_id)
 );
@@ -72,10 +72,10 @@ CREATE SCHEMA IF NOT EXISTS exam;
 -- Courses
 -- ------------------------------------------------------------
 CREATE TABLE exam.courses (
-    id          BIGSERIAL PRIMARY KEY,
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code        TEXT NOT NULL,
     title       TEXT NOT NULL,
-    owner_id    BIGINT NOT NULL REFERENCES auth.users(id),
+    owner_id    UUID NOT NULL REFERENCES auth.users(id),
 
     -- unified
     is_deleted  BOOLEAN NOT NULL DEFAULT FALSE,
@@ -99,8 +99,8 @@ FOR EACH ROW EXECUTE PROCEDURE set_mtime();
 -- Exams
 -- ------------------------------------------------------------
 CREATE TABLE exam.exams (
-    id           BIGSERIAL PRIMARY KEY,
-    course_id    BIGINT NOT NULL REFERENCES exam.courses(id) ON DELETE CASCADE,
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    course_id    UUID NOT NULL REFERENCES exam.courses(id) ON DELETE CASCADE,
     title        TEXT NOT NULL,
     start_time   TIMESTAMPTZ NOT NULL,
     end_time     TIMESTAMPTZ NOT NULL,
@@ -125,8 +125,8 @@ FOR EACH ROW EXECUTE PROCEDURE set_mtime();
 -- Questions
 -- ------------------------------------------------------------
 CREATE TABLE exam.questions (
-    id        BIGSERIAL PRIMARY KEY,
-    exam_id   BIGINT NOT NULL REFERENCES exam.exams(id) ON DELETE CASCADE,
+    id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    exam_id   UUID NOT NULL REFERENCES exam.exams(id) ON DELETE CASCADE,
     qtype     TEXT NOT NULL CHECK (qtype IN ('mcq','text','code')),
     body      TEXT NOT NULL,
     points    NUMERIC(6,2) NOT NULL DEFAULT 1.0,
@@ -149,8 +149,8 @@ FOR EACH ROW EXECUTE PROCEDURE set_mtime();
 -- Choices
 -- ------------------------------------------------------------
 CREATE TABLE exam.choices (
-    id          BIGSERIAL PRIMARY KEY,
-    question_id BIGINT NOT NULL REFERENCES exam.questions(id) ON DELETE CASCADE,
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    question_id UUID NOT NULL REFERENCES exam.questions(id) ON DELETE CASCADE,
     body        TEXT NOT NULL,
     is_correct  BOOLEAN NOT NULL DEFAULT FALSE,
 
@@ -169,8 +169,8 @@ FOR EACH ROW EXECUTE PROCEDURE set_mtime();
 -- Exam Assignments (who can take which exam)
 -- ------------------------------------------------------------
 CREATE TABLE exam.exam_assignments (
-    exam_id     BIGINT NOT NULL REFERENCES exam.exams(id) ON DELETE CASCADE,
-    user_id     BIGINT NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    exam_id     UUID NOT NULL REFERENCES exam.exams(id) ON DELETE CASCADE,
+    user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
 
     is_deleted  BOOLEAN NOT NULL DEFAULT FALSE,
     ctime       TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -189,9 +189,9 @@ FOR EACH ROW EXECUTE PROCEDURE set_mtime();
 -- Submissions
 -- ------------------------------------------------------------
 CREATE TABLE exam.submissions (
-    id          BIGSERIAL PRIMARY KEY,
-    exam_id     BIGINT NOT NULL REFERENCES exam.exams(id) ON DELETE CASCADE,
-    user_id     BIGINT NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    exam_id     UUID NOT NULL REFERENCES exam.exams(id) ON DELETE CASCADE,
+    user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     status      TEXT NOT NULL CHECK (status IN ('draft','submitted','graded')),
 
     is_deleted  BOOLEAN NOT NULL DEFAULT FALSE,
@@ -214,10 +214,10 @@ FOR EACH ROW EXECUTE PROCEDURE set_mtime();
 -- Answers
 -- ------------------------------------------------------------
 CREATE TABLE exam.answers (
-    id             BIGSERIAL PRIMARY KEY,
-    submission_id  BIGINT NOT NULL REFERENCES exam.submissions(id) ON DELETE CASCADE,
-    question_id    BIGINT NOT NULL REFERENCES exam.questions(id)   ON DELETE CASCADE,
-    choice_id      BIGINT REFERENCES exam.choices(id),
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    submission_id  UUID NOT NULL REFERENCES exam.submissions(id) ON DELETE CASCADE,
+    question_id    UUID NOT NULL REFERENCES exam.questions(id)   ON DELETE CASCADE,
+    choice_id      UUID REFERENCES exam.choices(id),
     text_answer    TEXT,
 
     is_deleted     BOOLEAN NOT NULL DEFAULT FALSE,
@@ -250,9 +250,9 @@ CREATE SCHEMA IF NOT EXISTS grading;
 -- Answer Grades
 -- ------------------------------------------------------------
 CREATE TABLE grading.answer_grades (
-    id          BIGSERIAL PRIMARY KEY,
-    answer_id   BIGINT NOT NULL REFERENCES exam.answers(id) ON DELETE CASCADE,
-    grader_id   BIGINT NOT NULL REFERENCES auth.users(id),
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    answer_id   UUID NOT NULL REFERENCES exam.answers(id) ON DELETE CASCADE,
+    grader_id   UUID NOT NULL REFERENCES auth.users(id),
     score       NUMERIC(6,2) NOT NULL,
     feedback    TEXT,
 
@@ -273,10 +273,10 @@ FOR EACH ROW EXECUTE PROCEDURE set_mtime();
 -- Submission Grades
 -- ------------------------------------------------------------
 CREATE TABLE grading.submission_grades (
-    id             BIGSERIAL PRIMARY KEY,
-    submission_id  BIGINT NOT NULL REFERENCES exam.submissions(id) ON DELETE CASCADE,
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    submission_id  UUID NOT NULL REFERENCES exam.submissions(id) ON DELETE CASCADE,
     total_score    NUMERIC(8,2) NOT NULL,
-    finalized_by   BIGINT REFERENCES auth.users(id),
+    finalized_by   UUID REFERENCES auth.users(id),
     finalized_at   TIMESTAMPTZ,
 
     is_deleted     BOOLEAN NOT NULL DEFAULT FALSE,
