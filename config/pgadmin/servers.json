@@ -1,11 +1,12 @@
 {
   "Servers": {
     "1": {
-      "Name": "lab-pg (superuser)",
+      "Name": "exam-sys (test env)",
       "Group": "Servers",
       "Host": "pg",
       "Port": 5432,
       "Username": "app_owner",
+      "Password": "secretpw",
       "SSLMode": "prefer",
       "MaintenanceDB": "postgres"
     }
