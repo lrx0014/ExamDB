@@ -47,12 +47,12 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA auth, exam, grading
 -- ============================================================
 CREATE ROLE cap_write NOLOGIN IN ROLE cap_read;
 
-GRANT INSERT, UPDATE ON ALL TABLES IN SCHEMA exam, grading TO cap_write;
-GRANT USAGE ON ALL SEQUENCES IN SCHEMA exam, grading TO cap_write;
+GRANT INSERT, UPDATE ON ALL TABLES IN SCHEMA auth, exam, grading TO cap_write;
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA auth, exam, grading TO cap_write;
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA exam, grading
+ALTER DEFAULT PRIVILEGES IN SCHEMA auth, exam, grading
   GRANT INSERT, UPDATE ON TABLES TO cap_write;
-ALTER DEFAULT PRIVILEGES IN SCHEMA exam, grading
+ALTER DEFAULT PRIVILEGES IN SCHEMA auth, exam, grading
   GRANT USAGE ON SEQUENCES      TO cap_write;
 
 -- ============================================================
@@ -62,9 +62,9 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA exam, grading
 -- ============================================================
 CREATE ROLE cap_delete NOLOGIN;
 
-GRANT DELETE ON ALL TABLES IN SCHEMA exam, grading TO cap_delete;
+GRANT DELETE ON ALL TABLES IN SCHEMA auth, exam, grading TO cap_delete;
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA exam, grading
+ALTER DEFAULT PRIVILEGES IN SCHEMA auth, exam, grading
   GRANT DELETE ON TABLES TO cap_delete;
 
 -- ============================================================

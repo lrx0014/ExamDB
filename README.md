@@ -71,3 +71,20 @@ docker compose exec pg ls /var/lib/postgresql/wal-archive | tail
 # you should see the copied records
 docker compose exec backup_console ls /backups/wal-archive
 ```
+
+### 4. Application Test (Api Server)
+```shell
+# register a user
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alice@example.com","password":"secret123","fullName":"Alice"}'
+
+# login
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alice@example.com","password":"secret123"}'
+
+# query database to check generated row data
+docker compose exec pg psql -U app_owner -d exam_sys -c \
+  "SELECT * FROM auth.users;"
+```

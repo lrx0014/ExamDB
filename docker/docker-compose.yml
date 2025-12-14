@@ -51,20 +51,21 @@ services:
       - ../sqls/rbac/02-users.sql:/docker-entrypoint-initdb.d/04-rbac-users.sql:ro
       - wal-archive:/var/lib/postgresql/wal-archive:rw
 
-  # Use postgres:alpine as a tiny base so we have psql in shells
-  backend:
-    image: postgres:16-alpine
-    container_name: backend
-    command: ["sh", "-c", "sleep infinity"]
+  api_server:
+    build:
+      context: ../backend/api-server
+    image: examdb/api-server:local
+    container_name: api_server
+    restart: unless-stopped
     env_file:
-      - ./env/pg.env
-    environment:
-      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg:5432/${POSTGRES_DB}?sslmode=disable
+      - ./env/api.env
     depends_on:
       - pg
+    ports:
+      - "8080:8080"
     networks:
       lab:
-        ipv4_address: 172.28.0.11
+        ipv4_address: 172.28.0.12
 
   dba_console:
     image: postgres:16-alpine
