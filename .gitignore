@@ -1,1 +1,15 @@
 .DS_Store
+.DS_Store
+docs/
+node_modules/
+frontend/exam-sys/node_modules/
+frontend/exam-sys/.vite/
+frontend/exam-sys/dist/
+frontend/exam-sys/.next/
+frontend/exam-sys/.nuxt/
+frontend/exam-sys/.output/
+frontend/exam-sys/.yarn/
+frontend/exam-sys/.pnpm-store/
+frontend/exam-sys/.tmp/
+frontend/exam-sys/.DS_Store
+frontend/exam-sys/package-lock.json
