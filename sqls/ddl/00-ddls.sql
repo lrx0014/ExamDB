@@ -5,14 +5,6 @@ WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'exam_sys') \gexec
 \connect exam_sys
 
 -- ============================================================
---  Common Extensions
--- ============================================================
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-CREATE EXTENSION IF NOT EXISTS btree_gin;
-CREATE EXTENSION IF NOT EXISTS citext;
-
--- ============================================================
 --  Common Trigger: auto-update mtime
 -- ============================================================
 CREATE OR REPLACE FUNCTION set_mtime()
