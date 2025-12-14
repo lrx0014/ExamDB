@@ -88,3 +88,6 @@ curl -X POST http://localhost:8080/api/auth/login \
 docker compose exec pg psql -U app_owner -d exam_sys -c \
   "SELECT * FROM auth.users;"
 ```
+
+### 5. Frontend App
+Try frontend app: [http://localhost:4173](`http://localhost:4173`)
