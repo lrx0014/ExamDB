@@ -39,5 +39,21 @@ docker compose exec sysadmin_console psql -h pg -U app_owner -d exam_sys -c 'sel
 # access from an un-approved location (unknown_console - 172.28.0.99)
 # you should get an error
 docker compose exec unknown_console psql -h pg -U app_owner -d exam_sys -c 'select 1;'
+```
+
+### 2. Full Backup:
+```shell
+# check backup cron
+docker compose exec backup_console cat /etc/crontabs/root
+
+
+# run a manual full backup using backup_user role in backup_console (172.28.0.41)
+docker compose exec backup_console sh -c \
+  'PGPASSWORD=$PGPASSWORD PGUSER=$PGUSER PGHOST=$PGHOST PGDATABASE=$PGDATABASE \
+   pg_dump -h $PGHOST -U $PGUSER -d $PGDATABASE -F c -f /backups/manual_$(date +%Y%m%d%H%M).dump'
+
+# check the dump file
+# you should see the manual_* dump files
+docker compose exec backup_console ls -lh /backups
 
 ```
