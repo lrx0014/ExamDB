@@ -17,8 +17,10 @@ Schema and Roles:
 ```shell
 git clone https://github.com/lrx0014/ExamDB.git
 cd ExamDB/docker
+
 # clean previous mounted volumes
 docker compose down -v
+
 # start
 docker compose up -d
 ```
