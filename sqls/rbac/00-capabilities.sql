@@ -15,6 +15,10 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 -- ------------------------------
 -- 0) Common helpers (one-time)
 -- ------------------------------
+-- Ensure supporting schemas exist for grants below
+CREATE SCHEMA IF NOT EXISTS admin;
+CREATE SCHEMA IF NOT EXISTS audit;
+
 -- If you frequently create new tables/functions, set safe defaults for future objects.
 -- We'll attach default privileges AFTER we create each cap_* role.
 
@@ -94,7 +98,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA audit
 -- ============================================================
 CREATE ROLE cap_monitor NOLOGIN;
 
-GRANT CONNECT ON DATABASE current_database() TO cap_monitor;
+GRANT CONNECT ON DATABASE exam_sys TO cap_monitor;
 GRANT pg_read_all_stats TO cap_monitor;
 GRANT USAGE ON SCHEMA pg_catalog, information_schema TO cap_monitor;
 
@@ -114,7 +118,7 @@ REVOKE ALL ON ALL SEQUENCES IN SCHEMA auth, exam, grading FROM cap_monitor;
 --    - allow CONNECT
 -- ============================================================
 CREATE ROLE cap_connect NOLOGIN;
-GRANT CONNECT ON DATABASE current_database() TO cap_connect;
+GRANT CONNECT ON DATABASE exam_sys TO cap_connect;
 
 -- ============================================================
 -- 8) Atomic Role: cap_catalog_read
@@ -125,3 +129,22 @@ CREATE ROLE cap_catalog_read NOLOGIN;
 GRANT USAGE ON SCHEMA information_schema, pg_catalog TO cap_catalog_read;
 GRANT SELECT ON ALL TABLES IN SCHEMA information_schema TO cap_catalog_read;
 
+-- ============================================================
+-- 9) Atomic Role: cap_ddl
+--    - Controlled DDL via admin.safe_alter
+-- ============================================================
+CREATE ROLE cap_ddl NOLOGIN;
+GRANT CREATE, USAGE ON SCHEMA auth, exam, grading TO cap_ddl;
+
+-- Ensure admin helper exists for controlled DDL
+CREATE OR REPLACE FUNCTION admin.safe_alter(q text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  EXECUTE q;
+END;
+$$;
+REVOKE ALL ON FUNCTION admin.safe_alter(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION admin.safe_alter(text) TO cap_ddl;

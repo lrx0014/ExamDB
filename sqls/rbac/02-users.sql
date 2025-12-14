@@ -61,8 +61,7 @@ ALTER ROLE app_user_r  SET search_path = 'exam,auth,grading,public';
 ALTER ROLE app_user_rw SET search_path = 'exam,auth,grading,public';
 
 -- Ops roles
-ALTER ROLE backup_user   SET statement_timeout = '5m';
+ALTER ROLE backup_user   SET statement_timeout = '5min';
 ALTER ROLE monitor_user  SET search_path = 'pg_catalog,public';
 ALTER ROLE auditor_user  SET search_path = 'audit,information_schema,pg_catalog,public';
 ALTER ROLE dba_blind_user SET statement_timeout = '60s';
-

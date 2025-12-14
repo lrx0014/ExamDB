@@ -30,11 +30,11 @@ services:
       - pg-data:/var/lib/postgresql/data
       - ./config/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
       - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
-      - ../sqls/00-create-db.sql:/docker-entrypoint-initdb.d/00-create-db.sql:ro
-      - ../sqls/00-admin-schema.sql:/docker-entrypoint-initdb.d/01-admin-schema.sql:ro
-      - ../sqls/DDLs.sql:/docker-entrypoint-initdb.d/02-ddl.sql:ro
-      - ../sqls/roles.sql:/docker-entrypoint-initdb.d/03-roles.sql:ro
-    # NOTE: not publishing port 5432 to the host — PG is reachable only from this network
+      - ../sqls/init/00-create-db.sql:/docker-entrypoint-initdb.d/00-create-db.sql:ro
+      - ../sqls/ddl/00-ddls.sql:/docker-entrypoint-initdb.d/01-ddl.sql:ro
+      - ../sqls/rbac/00-capabilities.sql:/docker-entrypoint-initdb.d/02-rbac-capabilities.sql:ro
+      - ../sqls/rbac/01-roles.sql:/docker-entrypoint-initdb.d/03-rbac-roles.sql:ro
+      - ../sqls/rbac/02-users.sql:/docker-entrypoint-initdb.d/04-rbac-users.sql:ro
 
   # Use postgres:alpine as a tiny base so we have psql in shells
   backend:
