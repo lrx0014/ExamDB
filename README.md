@@ -25,7 +25,7 @@ docker compose down -v
 docker compose up -d
 ```
 
-Access to pgAdmin: `http://localhost:5050` (username: `admin@example.com`, password: `changeme`)
+Access to pgAdmin: `http://localhost:5050` (username: `test-admin@test-env.com`, password: `testadminpw`)
 - password for the testing super user **app_owner**: `secretpw`
 
 ## Test Cases
