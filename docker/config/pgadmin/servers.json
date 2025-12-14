@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "lab-pg (superuser)",
+      "Group": "Servers",
+      "Host": "pg",
+      "Port": 5432,
+      "Username": "app_owner",
+      "SSLMode": "prefer",
+      "MaintenanceDB": "postgres"
+    }
+  }
+}

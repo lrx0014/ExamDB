@@ -40,11 +40,17 @@ REVOKE ALL ON SCHEMA public FROM PUBLIC;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM PUBLIC;
 
 -- Schemas in this project
-DO $$BEGIN
-  EXECUTE 'REVOKE ALL ON SCHEMA auth     FROM PUBLIC';
-  EXECUTE 'REVOKE ALL ON SCHEMA exam     FROM PUBLIC';
-  EXECUTE 'REVOKE ALL ON SCHEMA grading  FROM PUBLIC';
-EXCEPTION WHEN undefined_schema THEN NULL;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'auth') THEN
+    EXECUTE 'REVOKE ALL ON SCHEMA auth FROM PUBLIC';
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'exam') THEN
+    EXECUTE 'REVOKE ALL ON SCHEMA exam FROM PUBLIC';
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'grading') THEN
+    EXECUTE 'REVOKE ALL ON SCHEMA grading FROM PUBLIC';
+  END IF;
 END$$;
 
 -- ============================================================
@@ -76,17 +82,17 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA auth, exam, grading
 
 -- Monitoring (catalog + pg_stat_statements)
 CREATE ROLE monitor_base NOLOGIN;
-GRANT CONNECT ON DATABASE current_database() TO monitor_base;
+GRANT CONNECT ON DATABASE exam_sys TO monitor_base;
 GRANT USAGE ON SCHEMA pg_catalog, information_schema TO monitor_base;
 GRANT SELECT ON pg_catalog.pg_stat_activity      TO monitor_base;
 GRANT SELECT ON pg_catalog.pg_stat_database      TO monitor_base;
 GRANT SELECT ON pg_catalog.pg_locks              TO monitor_base;
-GRANT USAGE  ON EXTENSION pg_stat_statements     TO monitor_base;
-GRANT SELECT ON pg_stat_statements               TO monitor_base;
+-- For pg_stat_statements, rely on built-in read-all-stats role instead of extension privileges
+GRANT pg_read_all_stats TO monitor_base;
 
 -- Backup (logical + replication if needed)
 CREATE ROLE backup_base NOLOGIN;
-GRANT CONNECT ON DATABASE current_database() TO backup_base;
+GRANT CONNECT ON DATABASE exam_sys TO backup_base;
 GRANT SELECT ON ALL TABLES IN SCHEMA auth, exam, grading TO backup_base;
 ALTER DEFAULT PRIVILEGES IN SCHEMA auth, exam, grading
   GRANT SELECT ON TABLES TO backup_base;
@@ -156,29 +162,27 @@ REVOKE ALL ON ALL TABLES IN SCHEMA auth, exam, grading FROM dba_blind;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA auth, exam, grading FROM dba_blind;
 
 -- If you use RLS, create a deny-all policy for dba_blind on sensitive tables:
-DO $$DECLARE r record; BEGIN
+DO $$
+DECLARE r record;
+BEGIN
   FOR r IN
-    SELECT n.nspname,t.relname
-    FROM pg_class t JOIN pg_namespace n ON n.oid=t.relnamespace
-    WHERE n.nspname IN ('exam','grading','auth') AND t.relkind='r'
+    SELECT n.nspname, t.relname
+    FROM pg_class t JOIN pg_namespace n ON n.oid = t.relnamespace
+    WHERE n.nspname IN ('exam','grading','auth') AND t.relkind = 'r'
   LOOP
     EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', r.nspname, r.relname);
-    EXECUTE format($p$
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM pg_policies
-          WHERE schemaname=%L AND tablename=%L AND policyname='no_data_for_dba'
-        ) THEN
-          EXECUTE format(
-            'CREATE POLICY no_data_for_dba ON %I.%I FOR ALL TO dba_blind USING (false) WITH CHECK (false)',
-            %I, %I
-          );
-        END IF;
-      END$$;
-    $p$, r.nspname, r.relname, r.nspname, r.relname, r.nspname, r.relname);
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_policies
+      WHERE schemaname = r.nspname AND tablename = r.relname AND policyname = 'no_data_for_dba'
+    ) THEN
+      EXECUTE format(
+        'CREATE POLICY no_data_for_dba ON %I.%I FOR ALL TO dba_blind USING (false) WITH CHECK (false)',
+        r.nspname, r.relname
+      );
+    END IF;
   END LOOP;
-END$$;
+END
+$$;
 
 -- ============================================================
 -- Nice-to-have safety rails on LOGIN roles

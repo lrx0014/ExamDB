@@ -1,0 +1,89 @@
+networks:
+  lab:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+
+volumes:
+  pg-data:
+  pgadmin-data:
+
+services:
+  pg:
+    image: postgres:16
+    container_name: pg
+    restart: unless-stopped
+    env_file:
+      - ./env/pg.env
+    command: ["-c", "config_file=/etc/postgresql/postgresql.conf"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -h localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      lab:
+        ipv4_address: 172.28.0.10
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./config/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ../sqls/00-create-db.sql:/docker-entrypoint-initdb.d/00-create-db.sql:ro
+      - ../sqls/00-admin-schema.sql:/docker-entrypoint-initdb.d/01-admin-schema.sql:ro
+      - ../sqls/DDLs.sql:/docker-entrypoint-initdb.d/02-ddl.sql:ro
+      - ../sqls/roles.sql:/docker-entrypoint-initdb.d/03-roles.sql:ro
+    # NOTE: not publishing port 5432 to the host — PG is reachable only from this network
+
+  # Use postgres:alpine as a tiny base so we have psql in shells
+  backend:
+    image: postgres:16-alpine
+    container_name: backend
+    command: ["sh", "-c", "sleep infinity"]
+    env_file:
+      - ./env/pg.env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg:5432/${POSTGRES_DB}?sslmode=disable
+    depends_on:
+      - pg
+    networks:
+      lab:
+        ipv4_address: 172.28.0.11
+
+  dba_console:
+    image: postgres:16-alpine
+    container_name: dba_console
+    command: ["sh", "-c", "sleep infinity"]
+    env_file:
+      - ./env/pg.env
+    networks:
+      lab:
+        ipv4_address: 172.28.0.21
+
+  sysadmin_console:
+    image: postgres:16-alpine
+    container_name: sysadmin_console
+    command: ["sh", "-c", "sleep infinity"]
+    env_file:
+      - ./env/pg.env
+    networks:
+      lab:
+        ipv4_address: 172.28.0.31
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: pgadmin
+    restart: unless-stopped
+    depends_on:
+      - pg
+    env_file:
+      - ./env/pgadmin.env
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      - ./config/pgadmin/servers.json:/pgadmin4/servers.json:ro
+    ports:
+      - "5050:80"
+    networks:
+      lab:
+        ipv4_address: 172.28.0.40
