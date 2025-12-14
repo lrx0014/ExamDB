@@ -7,49 +7,49 @@
 -- Read-only app user
 CREATE ROLE app_user_r LOGIN INHERIT;
 -- (set password out-of-band)
--- ALTER ROLE app_user_r PASSWORD 'DO-NOT-SET-HERE';
-GRANT app_user_r_container TO app_user_r;
+ALTER ROLE app_user_r PASSWORD 'appuserrpw';
+GRANT app_user_r_role TO app_user_r;
 
 -- Read-write (NO DELETE) app user
 CREATE ROLE app_user_rw LOGIN INHERIT;
--- ALTER ROLE app_user_rw PASSWORD 'DO-NOT-SET-HERE';
-GRANT app_user_rw_container TO app_user_rw;
+ALTER ROLE app_user_rw PASSWORD 'appuserrwpw';
+GRANT app_user_rw_role TO app_user_rw;
 
 -- If a specific service really needs DELETE, grant the delete container separately
 CREATE ROLE app_user_rw_del LOGIN INHERIT;
--- ALTER ROLE app_user_rw_del PASSWORD 'DO-NOT-SET-HERE';
-GRANT app_user_rw_container, app_user_del_container TO app_user_rw_del;
+ALTER ROLE app_user_rw_del PASSWORD 'appuserrwdelpw';
+GRANT app_user_rw_role, app_user_del_role TO app_user_rw_del;
 
 -- ---------- Operations personas ----------
 -- Backup (logical dump)
 CREATE ROLE backup_user LOGIN INHERIT;
--- ALTER ROLE backup_user PASSWORD 'DO-NOT-SET-HERE';
-GRANT backup_container TO backup_user;
+ALTER ROLE backup_user PASSWORD 'backupuserpw';
+GRANT backup_role TO backup_user;
 
 -- Monitoring/metrics (no business data)
 CREATE ROLE monitor_user LOGIN INHERIT;
--- ALTER ROLE monitor_user PASSWORD 'DO-NOT-SET-HERE';
-GRANT monitor_container TO monitor_user;
+ALTER ROLE monitor_user PASSWORD 'monitoruserpw';
+GRANT monitor_role TO monitor_user;
 
 -- Auditing (logs/metadata only)
 CREATE ROLE auditor_user LOGIN INHERIT;
--- ALTER ROLE auditor_user PASSWORD 'DO-NOT-SET-HERE';
-GRANT auditor_container TO auditor_user;
+ALTER ROLE auditor_user PASSWORD 'auditoruserpw';
+GRANT auditor_role TO auditor_user;
 
 -- Logs-only reader (separate from auditor)
 CREATE ROLE logs_reader_user LOGIN INHERIT;
--- ALTER ROLE logs_reader_user PASSWORD 'DO-NOT-SET-HERE';
-GRANT logs_reader_container TO logs_reader_user;
+ALTER ROLE logs_reader_user PASSWORD 'logsreaderuserpw';
+GRANT logs_reader_role TO logs_reader_user;
 
 -- Catalog viewer (definitions only, no data rows)
 CREATE ROLE catalog_viewer_user LOGIN INHERIT;
--- ALTER ROLE catalog_viewer_user PASSWORD 'DO-NOT-SET-HERE';
-GRANT catalog_viewer_container TO catalog_viewer_user;
+ALTER ROLE catalog_viewer_user PASSWORD 'catalogvieweruserpw';
+GRANT catalog_viewer_role TO catalog_viewer_user;
 
 -- Blind DBA (DDL via controlled funcs + catalog, no data read)
 CREATE ROLE dba_blind_user LOGIN INHERIT;
--- ALTER ROLE dba_blind_user PASSWORD 'DO-NOT-SET-HERE';
-GRANT dba_blind_container TO dba_blind_user;
+ALTER ROLE dba_blind_user PASSWORD 'dbablinduserpw';
+GRANT dba_blind_role TO dba_blind_user;
 
 -- ======================
 -- Additional safeguards
