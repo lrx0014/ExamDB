@@ -90,4 +90,4 @@ docker compose exec pg psql -U app_owner -d exam_sys -c \
 ```
 
 ### 5. Frontend App
-Try frontend app: [http://localhost:4173](`http://localhost:4173`)
+Try frontend app: [http://localhost:4173](http://localhost:4173)
