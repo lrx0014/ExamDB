@@ -55,5 +55,19 @@ docker compose exec backup_console sh -c \
 # check the dump file
 # you should see the manual_* dump files
 docker compose exec backup_console ls -lh /backups
+```
 
+### 3. incremental backup (WAL Archiving)
+```shell
+# generate WAL by executing an INSERT
+docker compose exec pg psql -U app_owner -d exam_sys -c \
+  "CREATE TABLE IF NOT EXISTS wal_test(id int); INSERT INTO wal_test VALUES (1);"
+
+# confirm WAL generated
+# you should see some records
+docker compose exec pg ls /var/lib/postgresql/wal-archive | tail
+
+# wait 5 mins for the cron, then check the synced copies
+# you should see the copied records
+docker compose exec backup_console ls /backups/wal-archive
 ```
