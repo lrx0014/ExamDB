@@ -12,10 +12,22 @@ volumes:
   wal-archive:
 
 services:
+  init-volumes:
+    image: postgres:16
+    container_name: init_volumes
+    user: root
+    command: chown -R postgres:postgres /var/lib/postgresql/wal-archive
+    volumes:
+      - wal-archive:/var/lib/postgresql/wal-archive
+    restart: "no"
+
   pg:
     image: postgres:16
     container_name: pg
     restart: unless-stopped
+    depends_on:
+      init-volumes:
+        condition: service_completed_successfully
     env_file:
       - ./env/pg.env
     command: ["-c", "config_file=/etc/postgresql/postgresql.conf"]
@@ -37,7 +49,7 @@ services:
       - ../sqls/rbac/00-capabilities.sql:/docker-entrypoint-initdb.d/02-rbac-capabilities.sql:ro
       - ../sqls/rbac/01-roles.sql:/docker-entrypoint-initdb.d/03-rbac-roles.sql:ro
       - ../sqls/rbac/02-users.sql:/docker-entrypoint-initdb.d/04-rbac-users.sql:ro
-      - wal-archive:/var/lib/postgresql/wal-archive
+      - wal-archive:/var/lib/postgresql/wal-archive:rw
 
   # Use postgres:alpine as a tiny base so we have psql in shells
   backend:
@@ -102,7 +114,8 @@ services:
       lab:
         ipv4_address: 172.28.0.99
 
-  # full backup (weekly)
+  # 1. full backup (weekly)
+  # 2. incremental backup (WAL Archiving - every 5mins)
   backup_console:
     image: postgres:16-alpine
     container_name: backup_console
@@ -119,11 +132,13 @@ services:
       - -c
       - |
         cat <<'EOF' > /etc/crontabs/root
+        */5 * * * * mkdir -p /backups/wal-archive && for f in /wal-archive/*; do [ -f "$$f" ] || continue; bn=$(basename "$$f"); [ -f "/backups/wal-archive/$$bn" ] || cp "$$f" "/backups/wal-archive/$$bn"; done
         0 3 * * 0 PGPASSWORD=$${PGPASSWORD} PGUSER=$${PGUSER} PGHOST=$${PGHOST} PGDATABASE=$${PGDATABASE} pg_dump -h $${PGHOST} -U $${PGUSER} -d $${PGDATABASE} -F c -f /backups/exam_sys_$(date +\%Y\%m\%d).dump
         EOF
         crond -f -l 8
     volumes:
       - backups:/backups
+      - wal-archive:/wal-archive:ro
     depends_on:
       - pg
     networks:
