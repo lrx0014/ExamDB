@@ -31,6 +31,9 @@ export default function useAuthForm() {
       })
 
       if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error('Wrong email or password')
+        }
         const msg = (await res.json().catch(() => ({ message: 'Request failed' }))).message
         throw new Error(msg || 'Request failed')
       }

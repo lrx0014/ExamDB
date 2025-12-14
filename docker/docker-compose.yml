@@ -67,6 +67,22 @@ services:
       lab:
         ipv4_address: 172.28.0.12
 
+  fe_main:
+    build:
+      context: ../frontend/exam-sys
+    image: examdb/main-site:local
+    container_name: main_site
+    restart: unless-stopped
+    environment:
+      - VITE_API_BASE=http://api_server:8080
+    depends_on:
+      - api_server
+    ports:
+      - "4173:4173"
+    networks:
+      lab:
+        ipv4_address: 172.28.0.13
+
   dba_console:
     image: postgres:16-alpine
     container_name: dba_console
