@@ -28,6 +28,8 @@ docker compose up -d
 Access to pgAdmin: `http://localhost:5050` (username: `test-admin@test-env.com`, password: `testadminpw`)
 - password for the testing super user **app_owner**: `secretpw`
 
+> **⚠️ NOTICE** pgAdmin only used for testing purpose. It's not a part of the database design.
+
 ## Test Cases
 ### 1. Test HBA rules:
 ```shell
