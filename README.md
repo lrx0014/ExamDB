@@ -25,10 +25,12 @@ docker compose down -v
 docker compose up -d
 ```
 
-Access to pgAdmin: `http://localhost:5050` (username: `test-admin@test-env.com`, password: `testadminpw`)
+Access to pgAdmin: [http://localhost:5050](http://localhost:5050) (username: `test-admin@test-env.com`, password: `testadminpw`)
 - password for the testing super user **app_owner**: `secretpw`
 
-> **⚠️ NOTICE** pgAdmin only used for testing purpose. It's not a part of the database design.
+Access to SwaggerAPI documents: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
+
+> **⚠️ NOTICE** pgAdmin and swagger are only used for testing purpose. It's not a part of the database design.
 
 ## Test Cases
 ### 1. Test HBA rules:
@@ -75,6 +77,7 @@ docker compose exec backup_console ls /backups/wal-archive
 ```
 
 ### 4. Application Test (Api Server)
+also try: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
 ```shell
 # register a user
 curl -X POST http://localhost:8080/api/auth/register \

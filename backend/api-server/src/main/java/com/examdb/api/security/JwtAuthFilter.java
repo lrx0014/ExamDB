@@ -48,7 +48,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     private boolean isOpenPath(String path) {
-        return OPEN_PATHS.contains(path);
+        if (OPEN_PATHS.contains(path)) return true;
+        // Allow swagger/openapi assets
+        return path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs");
     }
 
     private void unauthorized(HttpServletResponse response, String msg) throws IOException {
