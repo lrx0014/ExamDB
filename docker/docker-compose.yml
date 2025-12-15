@@ -103,6 +103,7 @@ services:
       lab:
         ipv4_address: 172.28.0.31
 
+  # pgAdmin only used for testing purpose. It's not a part of the database design
   pgadmin:
     image: dpage/pgadmin4:8
     container_name: pgadmin
