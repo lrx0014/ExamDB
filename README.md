@@ -8,10 +8,15 @@ Server Configurations:
 - pg configurations: [config/postgresql](./config/postgresql.conf)
 - hba configurations: [config/hba](./config/pg_hba.conf)
 - pgAdmin: [config/pgAdmin](./config/pgadmin/servers.json)
+- CORS Policies: [...config/CorsConfig.java](./backend/api-server/src/main/java/com/examdb/api/config/CorsConfig.java)
 
-Schema and Roles:
+RBAC:
 - RBAC: [sqls/rbac](./sqls/rbac/)
+![RBAC](./docs/images/rbac.png)
+
+Schema and Tables:
 - Tables and Index: [sqls/ddl](./sqls/ddl/)
+- ER Diagrams: [docs/images/erd](./docs/images/erd/)
 
 ## Run MVP (Minimum Viable Product)
 ```shell
