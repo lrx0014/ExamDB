@@ -10,6 +10,7 @@ volumes:
   pgadmin-data:
   backups:
   wal-archive:
+  tls-certs:
 
 services:
   init-volumes:
@@ -21,12 +22,55 @@ services:
       - wal-archive:/var/lib/postgresql/wal-archive
     restart: "no"
 
+  certgen:
+    image: alpine:3.19
+    container_name: certgen
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        apk add --no-cache openssl
+        mkdir -p /certs
+
+        if [ ! -f /certs/ca.key ]; then
+          openssl genrsa -out /certs/ca.key 4096
+          openssl req -x509 -new -nodes -key /certs/ca.key -sha256 -days 3650 -out /certs/ca.crt -subj "/CN=ExamDB-CA"
+        fi
+
+        if [ ! -f /certs/server.key ]; then
+          openssl genrsa -out /certs/server.key 2048
+          openssl req -new -key /certs/server.key -out /certs/server.csr -subj "/CN=pg"
+          printf "subjectAltName=DNS:pg,IP:172.28.0.10\n" > /tmp/server-ext.cnf
+          openssl x509 -req -in /certs/server.csr -CA /certs/ca.crt -CAkey /certs/ca.key -CAcreateserial -out /certs/server.crt -days 825 -sha256 -extfile /tmp/server-ext.cnf
+          rm -f /certs/server.csr /tmp/server-ext.cnf
+        fi
+
+        if [ ! -f /certs/tls-console.key ]; then
+          openssl genrsa -out /certs/tls-console.key 2048
+          openssl req -new -key /certs/tls-console.key -out /certs/tls-console.csr -subj "/CN=app_user_rw"
+          printf "extendedKeyUsage=clientAuth\n" > /tmp/client-ext.cnf
+          openssl x509 -req -in /certs/tls-console.csr -CA /certs/ca.crt -CAkey /certs/ca.key -CAcreateserial -out /certs/tls-console.crt -days 825 -sha256 -extfile /tmp/client-ext.cnf
+          rm -f /certs/tls-console.csr /tmp/client-ext.cnf
+        fi
+
+        chown -R 999:999 /certs
+        chmod 600 /certs/server.key /certs/tls-console.key
+    volumes:
+      - tls-certs:/certs
+    networks:
+      lab:
+        ipv4_address: 172.28.0.5
+
   pg:
     image: postgres:16
     container_name: pg
     restart: unless-stopped
     depends_on:
       init-volumes:
+        condition: service_completed_successfully
+      certgen:
         condition: service_completed_successfully
     env_file:
       - ./env/pg.env
@@ -50,6 +94,7 @@ services:
       - ../sqls/rbac/01-roles.sql:/docker-entrypoint-initdb.d/03-rbac-roles.sql:ro
       - ../sqls/rbac/02-users.sql:/docker-entrypoint-initdb.d/04-rbac-users.sql:ro
       - wal-archive:/var/lib/postgresql/wal-archive:rw
+      - tls-certs:/certs:ro
 
   api_server:
     build:
@@ -162,3 +207,25 @@ services:
     networks:
       lab:
         ipv4_address: 172.28.0.41
+
+  tls_console:
+    image: postgres:16-alpine
+    container_name: tls_console
+    command: ["sh", "-c", "sleep infinity"]
+    env_file:
+      - ./env/pg.env
+    environment:
+      PGHOST: pg
+      PGUSER: app_user_rw
+      PGDATABASE: exam_sys
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: /certs/ca.crt
+      PGSSLCERT: /certs/tls-console.crt
+      PGSSLKEY: /certs/tls-console.key
+    volumes:
+      - tls-certs:/certs:ro
+    depends_on:
+      - pg
+    networks:
+      lab:
+        ipv4_address: 172.28.0.50
