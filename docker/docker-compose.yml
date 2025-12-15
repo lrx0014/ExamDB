@@ -84,6 +84,8 @@ services:
     networks:
       lab:
         ipv4_address: 172.28.0.10
+    ports:
+      - "5432:5432"
     volumes:
       - pg-data:/var/lib/postgresql/data
       - ../config/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
