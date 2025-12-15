@@ -1,6 +1,5 @@
 .DS_Store
 .DS_Store
-docs/
 node_modules/
 frontend/exam-sys/node_modules/
 frontend/exam-sys/.vite/
