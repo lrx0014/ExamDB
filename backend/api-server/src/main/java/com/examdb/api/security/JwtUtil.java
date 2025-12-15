@@ -4,7 +4,9 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.security.MessageDigest;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.StringJoiner;
 
@@ -27,6 +29,57 @@ public class JwtUtil {
         } catch (Exception e) {
             throw new IllegalStateException("Failed to sign JWT", e);
         }
+    }
+
+    public static Map<String, Object> verify(String token, String secret) {
+        try {
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                throw new IllegalArgumentException("Invalid token format");
+            }
+            String signingInput = parts[0] + "." + parts[1];
+            String expectedSig = hmacSha256(signingInput, secret);
+            if (!MessageDigest.isEqual(expectedSig.getBytes(StandardCharsets.UTF_8), parts[2].getBytes(StandardCharsets.UTF_8))) {
+                throw new IllegalArgumentException("Invalid signature");
+            }
+            String payloadJson = new String(B64_URL_DECODER.decode(parts[1]), StandardCharsets.UTF_8);
+            Map<String, Object> claims = parseClaims(payloadJson);
+            Object expObj = claims.get("exp");
+            if (expObj instanceof Number) {
+                long exp = ((Number) expObj).longValue();
+                if (Instant.now().getEpochSecond() > exp) {
+                    throw new IllegalArgumentException("Token expired");
+                }
+            }
+            return claims;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("JWT verification failed: " + e.getMessage(), e);
+        }
+    }
+
+    private static Map<String, Object> parseClaims(String json) {
+        Map<String, Object> claims = new HashMap<>();
+        String trimmed = json.trim();
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+            trimmed = trimmed.substring(1, trimmed.length() - 1);
+            if (!trimmed.isEmpty()) {
+                for (String part : trimmed.split(",")) {
+                    String[] kv = part.split(":", 2);
+                    if (kv.length == 2) {
+                        String key = kv[0].trim().replaceAll("^\"|\"$", "");
+                        String valRaw = kv[1].trim();
+                        if (valRaw.matches("^\".*\"$")) {
+                            claims.put(key, valRaw.replaceAll("^\"|\"$", ""));
+                        } else if (valRaw.matches("^-?\\d+$")) {
+                            claims.put(key, Long.parseLong(valRaw));
+                        } else {
+                            claims.put(key, valRaw);
+                        }
+                    }
+                }
+            }
+        }
+        return claims;
     }
 
     private static String hmacSha256(String data, String secret) throws Exception {
